@@ -8,7 +8,7 @@ inputs:
     default: ''
   git-branch:  # branch to work on
     description: 'Git Branch'
-    required: true
+    required: false
     default: 'main'
   ted-flavor:  # flavor of TED to use
     description: 'TED Flavor'
