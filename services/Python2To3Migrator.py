@@ -1,6 +1,6 @@
+from services.Generator import TEDGenerator
 
-
-class Python2To3Migrator:
+class Python2To3Migrator(TEDGenerator):
     def __init__(self):
         pass
 
