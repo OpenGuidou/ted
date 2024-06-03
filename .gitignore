@@ -1,3 +1,4 @@
 clone/
 **/__pycache__/
 **.diff
+.env

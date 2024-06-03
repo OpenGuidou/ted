@@ -1,7 +1,6 @@
-
-import os
 import re
 import argparse
+from dotenv import load_dotenv
 
 from services.UnitTestsGenerator import UnitTestsGenerator
 from services.Python2To3Migrator import Python2To3Migrator
@@ -25,6 +24,8 @@ def main():
     branch = arguments.branch
     ted_flavor = arguments.ted_flavor
 
+    load_dotenv()
+
     if (branch is None):
         branch = "main"
 
@@ -39,10 +40,6 @@ def main():
         case _:
             print("Unsupported ted flavor.")
             return
-
-    os.environ["OPENAI_API_VERSION"] = "2023-12-01-preview"
-    os.environ["AZURE_OPENAI_ENDPOINT"] = "XXXXXXXXXXXXXXXXXXXXXXXXXX"
-    os.environ["AZURE_OPENAI_API_KEY"] = "XXXXXXXXXXXXXXXXXXXXXXXXXX"
 
     llm = AzureChatOpenAI(
         deployment_name="gpt-4-32k-0613",
