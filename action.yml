@@ -1,0 +1,27 @@
+# action.yml
+name: 'TED run'
+description: 'Run TED on a given repo'
+inputs:
+  git-repo:  # repo to work on
+    description: 'Git Repository'
+    required: true
+    default: ''
+  git-branch:  # branch to work on
+    description: 'Git Branch'
+    required: true
+    default: 'main'
+  ted-flavor:  # flavor of TED to use
+    description: 'TED Flavor'
+    required: true
+    default: 'unit-tests' # can be 'unit-tests', 'python2-3-migration'
+outputs:
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - -r
+    - ${{ git-repo }}
+    - -b
+    - ${{ git-branch }}
+    - -f
+    - ${{ ted-flavor }}
