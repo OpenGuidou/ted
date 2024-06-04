@@ -1,5 +1,4 @@
 import os
-import re
 import argparse
 from dotenv import load_dotenv
 
@@ -9,8 +8,8 @@ from git import *
 from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
-from langchain_community.document_loaders import GitLoader, DirectoryLoader
-from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import GitLoader, DirectoryLoader, TextLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 def main():
 
@@ -43,7 +42,7 @@ def main():
 
     llm = AzureChatOpenAI(
         deployment_name=os.getenv('GPT_DEPLOYMENT_NAME'),
-        temperature=0.0,
+        #temperature=0.5,
     )
 
     output_parser = StrOutputParser()
@@ -54,30 +53,40 @@ def main():
         print(f"Loaded clones repository from URL: {git_url}")
         clone_path="./clone/"
         loader = GitLoader(
-        clone_url=git_url,
-        repo_path="./clone/",
-        branch=branch,
-        file_filter=lambda file_path: file_path.endswith(".java"))
+            clone_url=git_url,
+            repo_path="./clone/",
+            branch=branch,
+            file_filter=lambda file_path: filter_files(file_path, generator.getFileExtensions())
+        )
     else:
         print(f"Loader uses from github workspace")
         clone_path=os.getenv('GITHUB_WORKSPACE')
         loader = DirectoryLoader(
             path=clone_path,
-            glob="**/*.java",
-            show_progress=True
+            glob=generator.getFileGlob(), # @TODO Find a way to use glob with extensions: "**/*{" +",".join(generator.getFileExtensions()) + "}",
+            show_progress=True,
+            loader_cls=TextLoader
         )
+
+    textFormat = generator.getTextFormat()
 
     print(f"Load documents")
     docs = loader.load()
 
-    text_splitter = RecursiveCharacterTextSplitter.from_language(
-        language=Language.JAVA,chunk_size=2000, chunk_overlap=200
-    )
+    # if zero docs stop
+    if len(docs) == 0:
+        print("No documents found.")
+        return
     
-    print(f"Split documents")
+    print("Using language splitter {}.".format(textFormat))
+    text_splitter = RecursiveCharacterTextSplitter.from_language(
+        language=textFormat ,chunk_size=2000, chunk_overlap=200
+    )
+
+    print("Split documents")
     texts = text_splitter.split_documents(docs)
 
-    print(f"Create vectorstore and vectorstore")
+    print("Create embeddings and vectorstore")
     embedding = AzureOpenAIEmbeddings(
         # keys and endpoint are read from the .env file
         openai_api_version=os.getenv('OPENAI_API_VERSION'),
@@ -87,29 +96,18 @@ def main():
         texts, embedding=embedding
     )
     retriever = vectorstore.as_retriever()
-    
+
     print(f"Run generation")
-    answer = generator.runGeneration(retriever, llm, output_parser)    
+    generator.runGeneration(retriever, llm, output_parser)    
 
-    print("-------------------------------------------------\n")
-    print(answer)
-    parsed = re.search('```java\n([\\w\\W]*?)\n```', answer)
-    diff = ""
-    if parsed is not None:
-        diff = parsed.group(1)
-    else:
-        parsed = re.search('```diff\n([\\w\\W]*?)\n```', answer)
-        diff = parsed.group(1)
-
-    f = open("patch.diff", "w")
-    print("Parsed-------------------------------------------------\n")
-    print(diff)
-    f.write(diff)
-    f.close()
-
-    r = Repo('./clone/')
-    r.git.execute(['git', 'apply', '--reject', '--whitespace=fix', '../patch.diff'])
-
+def filter_files(file_path, extensions):
+    """
+    Filters files based on the given extensions
+    """
+    for extension in extensions:
+        if file_path.endswith(extension):
+            return True
+    return False
 
 def parse_arguments():
     """
