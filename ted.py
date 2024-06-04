@@ -1,3 +1,4 @@
+import os
 import re
 import argparse
 from dotenv import load_dotenv
@@ -42,8 +43,8 @@ def main():
             return
 
     llm = AzureChatOpenAI(
-        deployment_name="gpt-4-32k-0613",
-        temperature=0.5,
+        deployment_name=os.getenv('GPT_DEPLOYMENT_NAME'),
+        temperature=0.0,
     )
 
     output_parser = StrOutputParser()
@@ -59,9 +60,13 @@ def main():
         language=Language.JAVA,chunk_size=2000, chunk_overlap=200
     )
     texts = text_splitter.split_documents(data)
-
+    embedding = AzureOpenAIEmbeddings(
+        # keys and endpoint are read from the .env file
+        openai_api_version=os.getenv('OPENAI_API_VERSION'),
+        deployment=os.getenv('EMBEDDING_DEPLOYMENT_NAME'),
+    )
     vectorstore = FAISS.from_documents(
-        texts, embedding=AzureOpenAIEmbeddings()
+        texts, embedding=embedding
     )
     retriever = vectorstore.as_retriever()
     
