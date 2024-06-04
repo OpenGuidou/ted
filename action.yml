@@ -14,7 +14,6 @@ inputs:
     description: 'TED Flavor'
     required: true
     default: 'unit-tests' # can be 'unit-tests', 'python2-3-migration'
-outputs:
 runs:
   using: 'docker'
   image: 'Dockerfile'
