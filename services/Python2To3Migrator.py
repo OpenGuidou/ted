@@ -11,7 +11,7 @@ class Python2To3Migrator(TEDGenerator):
     def __init__(self):
         pass
 
-    def runGeneration(self, retriever, llm, output_parser) -> None:
+    def runGeneration(self, retriever, llm, output_parser, cloneDir) -> None:
         template = """You are a skilled python developer. Your job is to migrate python 2 projects to python 3.
 
         You work in two uses cases: You read the code provided provide a list of files that needs to be modified during the migration, or provide the full content of a file requested after the migration.
@@ -77,7 +77,7 @@ class Python2To3Migrator(TEDGenerator):
                 fileParsed = re.search('```migrated\n([\\w\\W]*?)\n```', fileAnswer)
                 if fileParsed is not None:
                     migratedContent = fileParsed.group(1)
-                    f = open("clone/" + file, "w")
+                    f = open(cloneDir + file, "w")
                     f.write(migratedContent)
                     f.close()
                 else:

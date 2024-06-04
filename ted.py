@@ -54,7 +54,7 @@ def main():
         clone_path="./clone/"
         loader = GitLoader(
             clone_url=git_url,
-            repo_path="./clone/",
+            repo_path=clone_path,
             branch=branch,
             file_filter=lambda file_path: filter_files(file_path, generator.getFileExtensions())
         )
@@ -98,7 +98,7 @@ def main():
     retriever = vectorstore.as_retriever()
 
     print(f"Run generation")
-    generator.runGeneration(retriever, llm, output_parser)    
+    generator.runGeneration(retriever, llm, output_parser, clone_path)    
 
 def filter_files(file_path, extensions):
     """

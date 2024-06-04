@@ -4,7 +4,7 @@ from langchain_text_splitters import Language
 
 class TEDGenerator(object):
     
-    def runGeneration(self, retriever, llm, output_parser) -> None :
+    def runGeneration(self, retriever, llm, output_parser, cloneDir) -> None :
         """Default generator."""
         pass
 

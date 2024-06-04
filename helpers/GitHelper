@@ -10,7 +10,8 @@ def create_pull_request(project_name, repo_name, title, description, head_branch
         repo_name)
     headers = {
         "Authorization": "token {0}".format(git_token),
-        "Content-Type": "application/json"}
+        "Content-Type": "application/json"
+    }
 
     payload = {
         "title": title,

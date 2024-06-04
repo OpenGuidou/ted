@@ -8,7 +8,7 @@ from langchain_text_splitters import Language
 
 class UnitTestsGenerator(TEDGenerator):
 
-    def runGeneration(self, retriever, llm, output_parser) -> None:
+    def runGeneration(self, retriever, llm, output_parser, cloneDir) -> None:
 
         template = """You are a skilled java code generator. You read the code provided and you generate answers as a applicable git diff. The generated code should work. Answer the question based on the following context:
         {context}
