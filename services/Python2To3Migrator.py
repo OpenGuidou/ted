@@ -18,7 +18,7 @@ class Python2To3Migrator(TEDGenerator):
         
         For the list of file case: 
         You return the answer without any explanation in a Json format for the files listing case. 
-        You should only return the files containing a change to be done for the migration.
+        You should only return the files containing a change to be done for the migration. You should return all the files that need to be modified.
         You should take into account, if applicable, all python files and other files such as Dockerfile, readme, requirements.txt, etc.
 
         Here is an example of the expected output for the file listing case:
