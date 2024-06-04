@@ -10,4 +10,4 @@ RUN mkdir -p clone && chmod -R 777 clone
 
 RUN git config --system --add safe.directory "/clone"
 
-ENTRYPOINT ["python3", "ted.py"]
+ENTRYPOINT ["python3", "/ted.py"]
