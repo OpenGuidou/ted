@@ -46,3 +46,6 @@ class UnitTestsGenerator(TEDGenerator):
     
     def getFileExtension(self) -> Language:
         return Language.JAVA
+    
+    def getTextFormat(self) -> Language:
+        return Language.JAVA
