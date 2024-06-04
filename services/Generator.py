@@ -1,4 +1,5 @@
 
+from typing import List
 from langchain_text_splitters import Language
 
 class TEDGenerator(object):
@@ -7,7 +8,7 @@ class TEDGenerator(object):
         """Default generator."""
         pass
 
-    def getFileExtension(self) -> str:
+    def getFileExtensions(self) -> List[str]:
         """Returns the file extension repo code to take into account."""
         pass
 

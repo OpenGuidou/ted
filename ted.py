@@ -43,21 +43,26 @@ def main():
 
     llm = AzureChatOpenAI(
         deployment_name=os.getenv('GPT_DEPLOYMENT_NAME'),
-        temperature=0.0,
+        #temperature=0.5,
     )
 
     output_parser = StrOutputParser()
+
+    textFormat = generator.getTextFormat()
+    file_filter = lambda file_path: filter_files(file_path, generator.getFileExtensions()) #or file_path.endswith("Dockerfile")
 
     loader = GitLoader(
         clone_url=git_url,
         repo_path="./clone/",
         branch=branch,
-        file_filter=lambda file_path: file_path.endswith(generator.getFileExtension()))
+        file_filter=file_filter,)
     data = loader.load()
 
+    print("Using language splitter {}.".format(textFormat))
     text_splitter = RecursiveCharacterTextSplitter.from_language(
-        language=generator.getTextFormat(),chunk_size=2000, chunk_overlap=200
+        language=textFormat ,chunk_size=2000, chunk_overlap=200
     )
+
     texts = text_splitter.split_documents(data)
     embedding = AzureOpenAIEmbeddings(
         # keys and endpoint are read from the .env file
@@ -73,6 +78,16 @@ def main():
 
     #r = Repo('./clone/')
     #r.git.execute(['git', 'apply', '--reject', '--whitespace=fix', '../patch.diff'])
+
+
+def filter_files(file_path, extensions):
+    """
+    Filters files based on the given extensions
+    """
+    for extension in extensions:
+        if file_path.endswith(extension):
+            return True
+    return False
 
 
 def parse_arguments():

@@ -1,5 +1,5 @@
-
 import re
+from typing import List
 
 from services.Generator import TEDGenerator
 from langchain_core.prompts import ChatPromptTemplate
@@ -44,8 +44,10 @@ class UnitTestsGenerator(TEDGenerator):
         f.write(diff)
         f.close()    
     
-    def getFileExtension(self) -> Language:
-        return Language.JAVA
     
+    def getFileExtensions(self) -> List[str]:
+        return [".java"]
+
     def getTextFormat(self) -> Language:
         return Language.JAVA
+    
