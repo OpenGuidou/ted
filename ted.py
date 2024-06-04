@@ -1,5 +1,4 @@
 import os
-import re
 import argparse
 from dotenv import load_dotenv
 
@@ -10,7 +9,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_community.document_loaders import GitLoader
-from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 def main():
@@ -53,11 +52,11 @@ def main():
         clone_url=git_url,
         repo_path="./clone/",
         branch=branch,
-        file_filter=lambda file_path: file_path.endswith(".java"))
+        file_filter=lambda file_path: file_path.endswith(generator.getFileExtension()))
     data = loader.load()
 
     text_splitter = RecursiveCharacterTextSplitter.from_language(
-        language=Language.JAVA,chunk_size=2000, chunk_overlap=200
+        language=generator.getTextFormat(),chunk_size=2000, chunk_overlap=200
     )
     texts = text_splitter.split_documents(data)
     embedding = AzureOpenAIEmbeddings(
@@ -70,26 +69,10 @@ def main():
     )
     retriever = vectorstore.as_retriever()
     
-    answer = generator.runGeneration(retriever, llm, output_parser)    
+    generator.runGeneration(retriever, llm, output_parser)    
 
-    print("-------------------------------------------------\n")
-    print(answer)
-    parsed = re.search('```java\n([\w\W]*?)\n```', answer)
-    diff = ""
-    if parsed is not None:
-        diff = parsed.group(1)
-    else:
-        parsed = re.search('```diff\n([\w\W]*?)\n```', answer)
-        diff = parsed.group(1)
-
-    f = open("patch.diff", "w")
-    print("Parsed-------------------------------------------------\n")
-    print(diff)
-    f.write(diff)
-    f.close()
-
-    r = Repo('./clone/')
-    r.git.execute(['git', 'apply', '--reject', '--whitespace=fix', '../patch.diff'])
+    #r = Repo('./clone/')
+    #r.git.execute(['git', 'apply', '--reject', '--whitespace=fix', '../patch.diff'])
 
 
 def parse_arguments():
