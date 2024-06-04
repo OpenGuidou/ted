@@ -9,9 +9,8 @@ from git import *
 from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
-from langchain_community.document_loaders import GitLoader
+from langchain_community.document_loaders import GitLoader, DirectoryLoader
 from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
-
 
 def main():
 
@@ -49,17 +48,36 @@ def main():
 
     output_parser = StrOutputParser()
 
-    loader = GitLoader(
+    # Check if git_url exists
+    clone_path = None
+    if git_url:
+        print(f"Loaded clones repository from URL: {git_url}")
+        clone_path="./clone/"
+        loader = GitLoader(
         clone_url=git_url,
         repo_path="./clone/",
         branch=branch,
         file_filter=lambda file_path: file_path.endswith(".java"))
-    data = loader.load()
+    else:
+        print(f"Loader uses from github workspace")
+        clone_path=os.getenv('GITHUB_WORKSPACE')
+        loader = DirectoryLoader(
+            path=clone_path,
+            glob="**/*.java",
+            show_progress=True
+        )
+
+    print(f"Load documents")
+    docs = loader.load()
 
     text_splitter = RecursiveCharacterTextSplitter.from_language(
         language=Language.JAVA,chunk_size=2000, chunk_overlap=200
     )
-    texts = text_splitter.split_documents(data)
+    
+    print(f"Split documents")
+    texts = text_splitter.split_documents(docs)
+
+    print(f"Create vectorstore and vectorstore")
     embedding = AzureOpenAIEmbeddings(
         # keys and endpoint are read from the .env file
         openai_api_version=os.getenv('OPENAI_API_VERSION'),
@@ -70,16 +88,17 @@ def main():
     )
     retriever = vectorstore.as_retriever()
     
+    print(f"Run generation")
     answer = generator.runGeneration(retriever, llm, output_parser)    
 
     print("-------------------------------------------------\n")
     print(answer)
-    parsed = re.search('```java\n([\w\W]*?)\n```', answer)
+    parsed = re.search('```java\n([\\w\\W]*?)\n```', answer)
     diff = ""
     if parsed is not None:
         diff = parsed.group(1)
     else:
-        parsed = re.search('```diff\n([\w\W]*?)\n```', answer)
+        parsed = re.search('```diff\n([\\w\\W]*?)\n```', answer)
         diff = parsed.group(1)
 
     f = open("patch.diff", "w")
@@ -100,13 +119,14 @@ def parse_arguments():
         description='Runs TED for a given git repository and perform the required task')
     required_args = parser.add_argument_group('required arguments')
 
-    required_args.add_argument('-r', '--git-repo', type=str, help='The Git repo URL',
-                                required=True)
     required_args.add_argument('-f', '--ted-flavor', type=str, help='The task to perform',
                                 required=True)
 
     optional_args = parser.add_argument_group('optional arguments')
 
+    required_args.add_argument('-r', '--git-repo', type=str, help='The Git repo URL',
+                                required=False)
+    
     optional_args.add_argument('-b', '--branch', type=str, help='Optional, The branch to use as base',
                                 required=False)
 

@@ -4,3 +4,4 @@ faiss-cpu
 GitPython
 python-dotenv
 langchain_community
+unstructured

@@ -17,5 +17,5 @@ EMBEDDING_DEPLOYMENT_NAME="XXXX"
 # Run
 
 ```bash
-python3 ted.py -r https://github.com/AmadeusITGroup/jetstream-mini-controller.git -f unit-tests
+py ted.py -r https://github.com/AmadeusITGroup/jetstream-mini-controller.git -f unit-tests
 ```
