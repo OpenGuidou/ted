@@ -30,12 +30,12 @@ class UnitTestsGenerator(TEDGenerator):
 
         print("-------------------------------------------------\n")
         print(answer)
-        parsed = re.search('```java\n([\w\W]*?)\n```', answer)
+        parsed = re.search('\\`\\`\\`java\n([\w\W]*?)\n\\`\\`\\`', answer)
         diff = ""
         if parsed is not None:
             diff = parsed.group(1)
         else:
-            parsed = re.search('```diff\n([\w\W]*?)\n```', answer)
+            parsed = re.search('\\`\\`\\`diff\n([\w\W]*?)\n\\`\\`\\`', answer)
             diff = parsed.group(1)
 
         f = open("patch.diff", "w")
