@@ -19,14 +19,15 @@ class Python2To3Migrator(TEDGenerator):
         For the list of file case: 
         You return the answer without any explanation in a Json format for the files listing case. 
         You should only return the files containing a change to be done for the migration.
-        You should take into account, if applicable, all python files and other files such as Dockerfile, requirements.txt, etc.
+        You should take into account, if applicable, all python files and other files such as Dockerfile, readme, requirements.txt, etc.
 
         Here is an example of the expected output for the file listing case:
         {{
             "files": [
                 "file1.py",
                 "Dockerfile", 
-                "requirements.txt"
+                "requirements.txt",
+                "Readme.md"
             ]
         }}
 
@@ -89,3 +90,9 @@ class Python2To3Migrator(TEDGenerator):
     
     def getTextFormat(self) -> Language:
         return Language.PYTHON
+    
+    def getBranchName(self) -> str:
+        return "python2-3"
+    
+    def getCommitMessage(self) -> str:
+        return "chore: Python 2 to 3 migration."

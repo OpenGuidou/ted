@@ -50,3 +50,9 @@ class UnitTestsGenerator(TEDGenerator):
 
     def getTextFormat(self) -> Language:
         return Language.JAVA
+    
+    def getBranchName(self) -> str:
+        return "unit-tests"
+
+    def getCommitMessage(self) -> str:
+        return "chore: Unit tests generation."

@@ -15,3 +15,11 @@ class TEDGenerator(object):
     def getTextFormat(self) -> Language:
         """Returns the text format of the generator."""
         pass
+
+    def getBranchName(self) -> str:
+        """Returns the branch name used to push the branches to."""
+        pass
+
+    def getCommitMessage(self) -> str:
+        """Returns the commit message used to commit the changes."""
+        pass

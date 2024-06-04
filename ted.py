@@ -76,10 +76,6 @@ def main():
     
     generator.runGeneration(retriever, llm, output_parser)    
 
-    #r = Repo('./clone/')
-    #r.git.execute(['git', 'apply', '--reject', '--whitespace=fix', '../patch.diff'])
-
-
 def filter_files(file_path, extensions):
     """
     Filters files based on the given extensions
