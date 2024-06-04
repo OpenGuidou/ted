@@ -19,8 +19,8 @@ runs:
   image: 'Dockerfile'
   args:
     - -r
-    - ${{ git-repo }}
+    - ${{ inputs.git-repo }}
     - -b
-    - ${{ git-branch }}
+    - ${{ inputs.git-branch }}
     - -f
-    - ${{ ted-flavor }}
+    - ${{ inputs.ted-flavor }}
