@@ -2,3 +2,4 @@ clone/
 **/__pycache__/
 **.diff
 .env
+**.DS_Store
