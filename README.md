@@ -3,7 +3,7 @@
 ```bash
 pip install -r requirements.txt --user
 ```
-# Installation
+# Setup
 setup .env file in the root directory with the following content
 ```bash
 OPENAI_API_VERSION="2024-02-01"
@@ -14,7 +14,6 @@ EMBEDDING_DEPLOYMENT_NAME="XXXX"
 ````
 
 
-```bash
 # Run
 
 ```bash
