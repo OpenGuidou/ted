@@ -100,11 +100,12 @@ def main():
     )
     retriever = vector_store.as_retriever()
 
-    print("Run generation")
+    print("😀 Run generation")
     generator.run_generation(retriever, llm, output_parser, clone_path)
     
     if(push and github_repository and branch and github_token):
-        GitHelper().push_changes_in_pull_request(github_repository, "ted: suggestions", "feat/ted_suggestions", branch, github_token)
+        print("😎👌🔥 Push changes in pull request")
+        GitHelper().push_changes_in_pull_request(github_repository, "ted: suggestions", "feat/ted_suggestions", branch, github_token, clone_path)
 
 def filter_files(file_path, extensions):
     """
