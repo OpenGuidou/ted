@@ -78,7 +78,8 @@ class Python2To3Migrator(TEDGenerator):
                 if file_parsed is not None:
                     migrated_content = file_parsed.group(1)
                     f = open(clone_dir + file, "w")
-                    f.write(migrated_content)
+                    written = f.write(migrated_content)
+                    print("File written: {}, size: {}".format(clone_dir + file, written))
                     f.close()
                 else:
                     print("File parsing failure")
