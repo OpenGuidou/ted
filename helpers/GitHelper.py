@@ -1,37 +1,42 @@
 import json
 import requests
 
-from git import *
+from git import Repo
 
-def create_pull_request(repository, title, description, head_branch, base_branch, git_token):
-    """Creates the pull request for the head_branch against the base_branch"""
-    git_pulls_api = "https://github.com/api/v3/repos/{repository}/pulls".format(repository)
-    
-    headers = {
-        "Authorization": "token {0}".format(git_token),
-        "Content-Type": "application/json"
-    }
+class GitHelper(object):
+    """
+    Helper class for GIT
+    """
 
-    payload = {
-        "title": title,
-        "body": description,
-        "head": head_branch,
-        "base": base_branch,
-    }
+    def create_pull_request(self, repository, title, description, head_branch, base_branch, git_token):
+        """Creates the pull request for the head_branch against the base_branch"""
+        git_pulls_api = "https://github.com/api/v3/repos/{repository}/pulls".format(repository)
 
-    r = requests.post(
-        git_pulls_api,
-        headers=headers,
-        data=json.dumps(payload))
+        headers = {
+            "Authorization": "token {0}".format(git_token),
+            "Content-Type": "application/json"
+        }
 
-    if not r.ok:
-        print("Request Failed: {0}".format(r.text))
+        payload = {
+            "title": title,
+            "body": description,
+            "head": head_branch,
+            "base": base_branch,
+        }
 
-def pushChangesInPullRequest(repository, message, targetBranch, headBranch, token):
+        r = requests.post(
+            git_pulls_api,
+            headers=headers,
+            data=json.dumps(payload))
 
-    r = Repo('./clone/')
-    r.git.execute(['git', 'checkout', '-b', targetBranch])
-    r.git.commit('-am', message)
-    r.git.push('origin', targetBranch)
-    
-    create_pull_request(repository, message, '', targetBranch, headBranch, token)
+        if not r.ok:
+            print("Request Failed: {0}".format(r.text))
+
+    def push_changes_in_pull_request(self, repository, message, target_branch, head_branch, token):
+
+        r = Repo('./clone/')
+        r.git.execute(['git', 'checkout', '-b', target_branch])
+        r.git.commit('-am', message)
+        r.git.push('origin', target_branch)
+
+        self.create_pull_request(repository, message, '', target_branch, head_branch, token)

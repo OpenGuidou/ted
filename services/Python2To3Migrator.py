@@ -2,7 +2,7 @@ import re
 import json
 from typing import List
 
-from services.Generator import TEDGenerator
+from services.TEDGenerator import TEDGenerator
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_text_splitters import Language
@@ -11,7 +11,7 @@ class Python2To3Migrator(TEDGenerator):
     def __init__(self):
         pass
 
-    def runGeneration(self, retriever, llm, output_parser, cloneDir) -> None:
+    def run_generation(self, retriever, llm, output_parser, clone_dir) -> None:
         template = """You are a skilled python developer. Your job is to migrate python 2 projects to python 3.
 
         You work in two uses cases: You read the code provided provide a list of files that needs to be modified during the migration, or provide the full content of a file requested after the migration.
@@ -65,37 +65,37 @@ class Python2To3Migrator(TEDGenerator):
         parsed = re.search('```json\n([\\w\\W]*?)\n```', answer)
 
         if parsed is not None:
-            filesAnswer = parsed.group(1)
-            files = json.loads(filesAnswer)['files']
+            files_answer = parsed.group(1)
+            files = json.loads(files_answer)['files']
 
             for file in files:
                 print("-------------------------------------------------\n")
                 print("File to migrate: {}".format(file))
-                fileAnswer = chain.invoke("Give me the migrated version of the file {}, with the full content of the file".format(file))
-                print(fileAnswer)
+                file_answer = chain.invoke("Give me the migrated version of the file {}, with the full content of the file".format(file))
+                print(file_answer)
 
-                fileParsed = re.search('```migrated\n([\\w\\W]*?)\n```', fileAnswer)
-                if fileParsed is not None:
-                    migratedContent = fileParsed.group(1)
-                    f = open(cloneDir + file, "w")
-                    f.write(migratedContent)
+                file_parsed = re.search('```migrated\n([\\w\\W]*?)\n```', file_answer)
+                if file_parsed is not None:
+                    migrated_content = file_parsed.group(1)
+                    f = open(clone_dir + file, "w")
+                    f.write(migrated_content)
                     f.close()
                 else:
                     print("File parsing failure")
         else:
             print("Answer parsing failure")
     
-    def getFileExtensions(self) -> List[str]:
+    def get_file_extensions(self) -> List[str]:
         return [".py", ".md", ".txt"]
     
-    def getFileGlob(self) -> str:
+    def get_file_glob(self) -> str:
         return "**/*.py"
     
-    def getTextFormat(self) -> Language:
+    def get_text_format(self) -> Language:
         return Language.PYTHON
     
-    def getBranchName(self) -> str:
+    def get_branch_name(self) -> str:
         return "python2-3"
     
-    def getCommitMessage(self) -> str:
+    def get_commit_message(self) -> str:
         return "chore: Python 2 to 3 migration."
