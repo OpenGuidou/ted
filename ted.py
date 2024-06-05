@@ -68,6 +68,7 @@ def main():
         loader = DirectoryLoader(
             path=clone_path,
             glob=generator.get_file_glob(), # @TODO Find a way to use glob with extensions: "**/*{" +",".join(generator.getFileExtensions()) + "}",
+            exclude=["**/*.yml", "**/*.json"],
             show_progress=True,
             loader_cls=TextLoader
         )
