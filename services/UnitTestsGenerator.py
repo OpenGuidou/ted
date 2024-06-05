@@ -6,43 +6,47 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_text_splitters import Language
 
+
 class UnitTestsGenerator(TEDGenerator):
 
-    def runGeneration(self, retriever, llm, output_parser, cloneDir) -> None:
+    def run_generation(self, retriever, llm, output_parser, cloneDir) -> None:
         template = """
         As an advanced Java code generator, your role is to analyze and understand the provided code context.
         You should take into account, if applicable, all java files and other files such as Dockerfile, readme, pom.xml, etc.
+        The generated code should compile, be executable and meet the requirements specified in the question.  
+        In case the class uses Quarkus framework, a Quarkus test may need.
+        
         Context : {context}
         Question : {question}
         """
 
         prompt = ChatPromptTemplate.from_template(template)
 
-        chain = ( 
-            {
-                "context": retriever, "question": RunnablePassthrough()
-            }
-            | prompt
-            | llm
-            | output_parser
+        chain = (
+                {
+                    "context": retriever, "question": RunnablePassthrough()
+                }
+                | prompt
+                | llm
+                | output_parser
         )
 
         class_list = chain.invoke("""
-        Give me the list of java classes need to create new unit tests if test class not exist or enhance their unit tests.
-        return the answer without any explanation in a Json format for the classes listing case. 
+        Give me the list of existing java class in the project that you could improve the unit tests for them.
+        Return the answer without any explanation in a Json format for the class listing case. 
 
         Here is an example of the expected output for the file listing case:
         {{
             "files": [
-                "file1.py",
-                "Dockerfile", 
-                "requirements.txt",
-                "Readme.md"
+                "AAA.java",
+                "BBB.java", 
+                "CCC.java"
+                ...
             ]
         }}
         """)
-        print(class_list)
         print("-------------------------------------------------\n")
+        print(class_list)
 
         class_name = "ProductService.java"
 
@@ -79,14 +83,17 @@ class UnitTestsGenerator(TEDGenerator):
         Before going into the individual tests, let's first look at the complete suite of unit tests as a cohesive whole.
         We've added helpful comments to explain what each line does.
         Your task is to generate all the junit tests as a response in one test class based on the scenarios above. 
-        -The test should be functional, runnable, compilable and applicable.
-        -If test class exist, keep all the existing tests and methods in the class. Don't change the existing code.
-        -Don't test `assertThrows` if there's no exception thrown in the methode.
-        -Don't forget to add necessary package and imports for the test class. 
-        -Don't import the dependencies not added in the POM.xml.
-        -Don't add unnecessary code not included in the project.
-        -Don‘t make the methods not exist in the class.
-        -Don't show the explains and only return the final complete test class
+
+        - The test should be functional, runnable, compilable and applicable.
+        - New tests must be identifiable in their javadoc with @AIGenerated annotation.
+        - If there's no existing test class, you should create a new one.
+        - If test class exist, keep all the existing tests and methods in the class. Don't change the existing code.
+        - Don't test `assertThrows` if there's no exception thrown in the methode.
+        - Don't forget to add necessary package and imports for the test class. 
+        - Don't import the dependencies not added in the POM.xml.
+        - Don't add unnecessary code not included in the project.
+        - Don‘t make the methods not exist in the class.
+        - Don't show the explains and only return the final complete test class
         
         return the test class in the `java_final` block :
         ```java_final
@@ -103,19 +110,18 @@ class UnitTestsGenerator(TEDGenerator):
         if parsed is not None:
             diff = parsed.group(1)
 
-        f = open("generatedTest.java", "w")
+        f = open(f"{class_name}Test.java", "w")
         print("Parsed-------------------------------------------------\n")
         print(diff)
         f.write(diff)
-        f.close()    
-    
-    
+        f.close()
+
     def get_file_extensions(self) -> List[str]:
         return [".java"]
 
     def get_text_format(self) -> Language:
         return Language.JAVA
-    
+
     def get_branch_name(self) -> str:
         return "unit-tests"
 
