@@ -71,7 +71,7 @@ class Python2To3Migrator(TEDGenerator):
             for file in files:
                 print("-------------------------------------------------\n")
                 print("File to migrate: {}".format(file))
-                file_answer = chain.invoke("Give me the migrated version of the file {}, with the full content of the file".format(file))
+                file_answer = chain.invoke("Give me the migrated version of the file {} from python 2 to python 3, with the full content of the file".format(file))
                 print(file_answer)
 
                 file_parsed = re.search('```migrated\n([\\w\\W]*?)\n```', file_answer)
@@ -79,7 +79,7 @@ class Python2To3Migrator(TEDGenerator):
                     migrated_content = file_parsed.group(1)
                     f = open(clone_dir + "/" + file, "w")
                     written = f.write(migrated_content)
-                    print("File written: {}, size: {}".format(clone_dir + file, written))
+                    print("File written: {}, size: {}".format(clone_dir + "/" + file, written))
                     f.close()
                 else:
                     print("File parsing failure")
