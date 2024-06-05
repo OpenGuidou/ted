@@ -35,6 +35,7 @@ class GitHelper(object):
     def push_changes_in_pull_request(self, repository, message, target_branch, head_branch, token, clone_path):
 
         r = Repo(clone_path)
+        r.git.execute(['git', 'config', '--global', '--add', 'safe.directory', clone_path])
         r.git.execute(['git', 'checkout', '-b', target_branch])
         r.git.commit('-am', message)
         r.git.push('origin', target_branch)
