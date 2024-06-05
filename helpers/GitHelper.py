@@ -10,11 +10,12 @@ class GitHelper(object):
 
     def create_pull_request(self, repository, title, description, head_branch, base_branch, git_token):
         """Creates the pull request for the head_branch against the base_branch"""
-        git_pulls_api = "https://github.com/api/v3/repos/{repository}/pulls".format(repository=repository)
+        git_pulls_api = "https://api.github.com/repos/{repository}/pulls".format(repository=repository)
 
         headers = {
             "Authorization": "token {0}".format(git_token),
-            "Content-Type": "application/json"
+            "Content-Type": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28"
         }
 
         payload = {
