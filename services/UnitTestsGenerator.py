@@ -85,9 +85,6 @@ code to complete the test class declaration.:
     def get_file_extensions(self) -> List[str]:
         return [".java"]
 
-    def get_file_glob(self) -> str:
-        return "**/*.java"
-
     def get_text_format(self) -> Language:
         return Language.JAVA
     

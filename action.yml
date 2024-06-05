@@ -2,10 +2,6 @@
 name: 'TED run'
 description: 'Run TED on a given repo'
 inputs:
-  git-repo:  # repo to work on
-    description: 'Git Repository'
-    required: true
-    default: ''
   git-branch:  # branch to work on
     description: 'Git Branch'
     required: false

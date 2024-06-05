@@ -2,6 +2,8 @@ import os
 import argparse
 from uuid import uuid1
 from dotenv import load_dotenv
+from pprint import pprint
+from git import Repo
 
 from helpers.GitHelper import GitHelper
 from services.UnitTestsGenerator import UnitTestsGenerator
@@ -10,7 +12,10 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_community.document_loaders import GitLoader, DirectoryLoader, TextLoader
+from langchain_community.document_loaders.generic import GenericLoader
+from langchain_community.document_loaders.parsers import LanguageParser
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders.parsers.txt import TextParser
 
 def main():
 
@@ -50,39 +55,68 @@ def main():
     )
 
     output_parser = StrOutputParser()
-
+    loaders = []
     # Check if git_url exists
     clone_path = None
     if git_url:
         print(f"Loaded clones repository from URL: {git_url}")
         clone_path="./clone/"
-        loader = GitLoader(
-            clone_url=git_url,
-            repo_path=clone_path,
-            branch=branch,
-            file_filter=lambda file_path: filter_files(file_path, generator.get_file_extensions())
-        )
-    else:
+
+        if(os.path.exists(clone_path)):
+            print("Repository already cloned. Skip cloning.")
+        else:
+            print(f"Clone repository from {git_url} to {clone_path}")
+            Repo.clone_from(
+                url=git_url,
+                single_branch=True,
+                depth=1,
+                to_path=clone_path,
+                branch=branch,
+            )
+
+    if(not clone_path and os.getenv('GITHUB_WORKSPACE')):
         clone_path=os.getenv('GITHUB_WORKSPACE')
         print(f"Loader uses from github workspace: {clone_path}")
-        loader = DirectoryLoader(
-            path=clone_path,
-            glob=generator.get_file_glob(), # @TODO Find a way to use glob with extensions: "**/*{" +",".join(generator.getFileExtensions()) + "}",
-            exclude=["**/*.yml", "**/*.json"],
-            show_progress=True,
-            loader_cls=TextLoader
-        )
 
-    text_format = generator.get_text_format()
+    if(not clone_path):
+        print("No git repository provided.")
+        return
+        
+    print(f'📂 Load documents from {clone_path}')
+    loaders.append(GenericLoader.from_filesystem(
+        clone_path,
+        glob="*",
+        #suffixes= generator.get_file_extensions(),
+        #parser=LanguageParser(generator.get_text_format()),
+        suffixes= [".py"],
+        parser=LanguageParser(generator.get_text_format()),
+    ))
+    loaders.append(GenericLoader.from_filesystem(
+        clone_path,
+        glob="*",
+        suffixes= [".txt", ".md", "Dockerfile"],
+        parser= TextParser()
+    ))
 
-    print("Load documents")
-    docs = loader.load()
+    # Load all documents
+    docs = []
+    for loader in loaders:
+        docs.extend(loader.load())
+
+    # Add a new document to docs array
+    # docs.append(TextLoader("text", "This is a test document"))
 
     # if zero docs stop
     if len(docs) == 0:
-        print("No documents found.")
+        print("📄 No documents found.")
         return
-    
+    print(f"📄 Found {len(docs)} documents")
+
+    for document in docs:
+        pprint(document)
+
+           
+    text_format = generator.get_text_format()
     print("Using language splitter {}.".format(text_format))
     text_splitter = RecursiveCharacterTextSplitter.from_language(
         language=text_format ,chunk_size=2000, chunk_overlap=200
@@ -90,7 +124,8 @@ def main():
 
     print("Split documents")
     texts = text_splitter.split_documents(docs)
-
+    
+    print(f"📄 Generated {len(texts)} chuncks for {len(docs)} documents")
     print("Create embeddings and vector store")
     embedding = AzureOpenAIEmbeddings(
         # keys and endpoint are read from the .env file
@@ -102,7 +137,7 @@ def main():
     )
     retriever = vector_store.as_retriever()
 
-    print("😀 Run generation")
+    print("🔍 Run generation")
     generator.run_generation(retriever, llm, output_parser, clone_path)
     
     if(push and github_repository and branch and github_token):

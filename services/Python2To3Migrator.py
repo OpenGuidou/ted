@@ -61,7 +61,7 @@ class Python2To3Migrator(TEDGenerator):
         answer = chain.invoke("Give me the list of files that should be modified to migrate from Python 2 to Python 3.")
 
         print("-------------------------------------------------\n")
-        print(answer)
+        print(f"🆗: {answer}")
         parsed = re.search('```json\n([\\w\\W]*?)\n```', answer)
 
         if parsed is not None:
@@ -84,14 +84,11 @@ class Python2To3Migrator(TEDGenerator):
                 else:
                     print("File parsing failure")
         else:
-            print("Answer parsing failure")
+            print("🆘 Answer parsing failure")
     
     def get_file_extensions(self) -> List[str]:
-        return [".py", ".md", ".txt"]
-    
-    def get_file_glob(self) -> str:
-        return "**/*"
-    
+        return [".py"]
+        
     def get_text_format(self) -> Language:
         return Language.PYTHON
     
