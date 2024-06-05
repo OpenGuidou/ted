@@ -2,6 +2,7 @@ import os
 import argparse
 from dotenv import load_dotenv
 
+from helpers.GitHelper import pushChangesInPullRequest
 from services.UnitTestsGenerator import UnitTestsGenerator
 from services.Python2To3Migrator import Python2To3Migrator
 from git import *
@@ -20,7 +21,9 @@ def main():
     arguments = parse_arguments()
 
     git_url = arguments.git_repo
+    github_token = arguments.github_token
     branch = arguments.branch
+    github_repository = arguments.github_repository
     ted_flavor = arguments.ted_flavor
 
     load_dotenv()
@@ -59,8 +62,8 @@ def main():
             file_filter=lambda file_path: filter_files(file_path, generator.getFileExtensions())
         )
     else:
-        print(f"Loader uses from github workspace")
         clone_path=os.getenv('GITHUB_WORKSPACE')
+        print(f"Loader uses from github workspace: {clone_path}")
         loader = DirectoryLoader(
             path=clone_path,
             glob=generator.getFileGlob(), # @TODO Find a way to use glob with extensions: "**/*{" +",".join(generator.getFileExtensions()) + "}",
@@ -98,7 +101,10 @@ def main():
     retriever = vectorstore.as_retriever()
 
     print(f"Run generation")
-    generator.runGeneration(retriever, llm, output_parser, clone_path)    
+    generator.runGeneration(retriever, llm, output_parser, clone_path)
+    
+    if(github_repository and branch and github_token):
+        pushChangesInPullRequest(github_repository, "ted: suggestions", "feat/ted_suggestions", branch, github_token)    
 
 def filter_files(file_path, extensions):
     """
@@ -128,6 +134,12 @@ def parse_arguments():
     optional_args.add_argument('-b', '--branch', type=str, help='Optional, The branch to use as base',
                                 required=False)
 
+    optional_args.add_argument('-gh', '--github_token', type=str, help='Optional, Github token to create branch and open a pull request',
+                                required=False)
+    
+    optional_args.add_argument('-ghr', '--github_repository', type=str, help='Optional, Github repository (owner/repo)',
+                                required=False)
+    
     return parser.parse_args()
 
 

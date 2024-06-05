@@ -3,11 +3,10 @@ import requests
 
 from git import *
 
-def create_pull_request(project_name, repo_name, title, description, head_branch, base_branch, git_token):
+def create_pull_request(repository, title, description, head_branch, base_branch, git_token):
     """Creates the pull request for the head_branch against the base_branch"""
-    git_pulls_api = "https://github.com/api/v3/repos/{0}/{1}/pulls".format(
-        project_name,
-        repo_name)
+    git_pulls_api = "https://github.com/api/v3/repos/{repository}/pulls".format(repository)
+    
     headers = {
         "Authorization": "token {0}".format(git_token),
         "Content-Type": "application/json"
@@ -28,11 +27,11 @@ def create_pull_request(project_name, repo_name, title, description, head_branch
     if not r.ok:
         print("Request Failed: {0}".format(r.text))
 
-def pullChangesInPullRequest(projectName, repoName, message, targetBranch, headBranch, token):
+def pushChangesInPullRequest(repository, message, targetBranch, headBranch, token):
 
     r = Repo('./clone/')
     r.git.execute(['git', 'checkout', '-b', targetBranch])
     r.git.commit('-am', message)
     r.git.push('origin', targetBranch)
     
-    create_pull_request(projectName, repoName, message, '', targetBranch, headBranch, token)
+    create_pull_request(repository, message, '', targetBranch, headBranch, token)
