@@ -77,7 +77,7 @@ class Python2To3Migrator(TEDGenerator):
                 file_parsed = re.search('```migrated\n([\\w\\W]*?)\n```', file_answer)
                 if file_parsed is not None:
                     migrated_content = file_parsed.group(1)
-                    f = open(clone_dir + file, "w")
+                    f = open(clone_dir + "/" + file, "w")
                     written = f.write(migrated_content)
                     print("File written: {}, size: {}".format(clone_dir + file, written))
                     f.close()
