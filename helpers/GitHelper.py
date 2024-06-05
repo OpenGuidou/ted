@@ -10,7 +10,7 @@ class GitHelper(object):
 
     def create_pull_request(self, repository, title, description, head_branch, base_branch, git_token):
         """Creates the pull request for the head_branch against the base_branch"""
-        git_pulls_api = "https://github.com/api/v3/repos/{repository}/pulls".format(repository)
+        git_pulls_api = "https://github.com/api/v3/repos/{repository}/pulls".format(repository=repository)
 
         headers = {
             "Authorization": "token {0}".format(git_token),
@@ -24,13 +24,16 @@ class GitHelper(object):
             "base": base_branch,
         }
 
-        r = requests.post(
-            git_pulls_api,
-            headers=headers,
-            data=json.dumps(payload))
-
-        if not r.ok:
-            print("Request Failed: {0}".format(r.text))
+        try:
+            r = requests.post(
+                git_pulls_api,
+                headers=headers,
+                data=json.dumps(payload))
+            if not r.ok:
+                print("Request Failed: {0}".format(r.text))
+        except requests.exceptions.RequestException as e:
+            print("Request Failed: {0}".format(e))
+            raise e
 
     def push_changes_in_pull_request(self, repository, message, target_branch, head_branch, token, clone_path):
 
