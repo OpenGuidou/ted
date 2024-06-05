@@ -1,10 +1,11 @@
 import os
 import argparse
+from uuid import uuid1
 from dotenv import load_dotenv
 
+from helpers.GitHelper import GitHelper
 from services.UnitTestsGenerator import UnitTestsGenerator
 from services.Python2To3Migrator import Python2To3Migrator
-from git import *
 from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
@@ -20,7 +21,10 @@ def main():
     arguments = parse_arguments()
 
     git_url = arguments.git_repo
-    branch = arguments.branch
+    github_token = os.getenv('GITHUB_TOKEN')
+    branch = arguments.git_branch
+    push = arguments.push
+    github_repository = arguments.github_repository
     ted_flavor = arguments.ted_flavor
 
     load_dotenv()
@@ -34,7 +38,7 @@ def main():
             print("Unit tests generation.")
             generator = UnitTestsGenerator()
         case "python2-3":
-            print(f"Python 2 to 3 migration.")
+            print("Python 2 to 3 migration.")
             generator = Python2To3Migrator()
         case _:
             print("Unsupported ted flavor.")
@@ -56,21 +60,22 @@ def main():
             clone_url=git_url,
             repo_path=clone_path,
             branch=branch,
-            file_filter=lambda file_path: filter_files(file_path, generator.getFileExtensions())
+            file_filter=lambda file_path: filter_files(file_path, generator.get_file_extensions())
         )
     else:
-        print(f"Loader uses from github workspace")
         clone_path=os.getenv('GITHUB_WORKSPACE')
+        print(f"Loader uses from github workspace: {clone_path}")
         loader = DirectoryLoader(
             path=clone_path,
-            glob=generator.getFileGlob(), # @TODO Find a way to use glob with extensions: "**/*{" +",".join(generator.getFileExtensions()) + "}",
+            glob=generator.get_file_glob(), # @TODO Find a way to use glob with extensions: "**/*{" +",".join(generator.getFileExtensions()) + "}",
+            exclude=["**/*.yml", "**/*.json"],
             show_progress=True,
             loader_cls=TextLoader
         )
 
-    textFormat = generator.getTextFormat()
+    text_format = generator.get_text_format()
 
-    print(f"Load documents")
+    print("Load documents")
     docs = loader.load()
 
     # if zero docs stop
@@ -78,27 +83,31 @@ def main():
         print("No documents found.")
         return
     
-    print("Using language splitter {}.".format(textFormat))
+    print("Using language splitter {}.".format(text_format))
     text_splitter = RecursiveCharacterTextSplitter.from_language(
-        language=textFormat ,chunk_size=2000, chunk_overlap=200
+        language=text_format ,chunk_size=2000, chunk_overlap=200
     )
 
     print("Split documents")
     texts = text_splitter.split_documents(docs)
 
-    print("Create embeddings and vectorstore")
+    print("Create embeddings and vector store")
     embedding = AzureOpenAIEmbeddings(
         # keys and endpoint are read from the .env file
         openai_api_version=os.getenv('OPENAI_API_VERSION'),
         deployment=os.getenv('EMBEDDING_DEPLOYMENT_NAME'),
     )
-    vectorstore = FAISS.from_documents(
+    vector_store = FAISS.from_documents(
         texts, embedding=embedding
     )
-    retriever = vectorstore.as_retriever()
+    retriever = vector_store.as_retriever()
 
-    print(f"Run generation")
-    generator.runGeneration(retriever, llm, output_parser, clone_path)    
+    print("😀 Run generation")
+    generator.run_generation(retriever, llm, output_parser, clone_path)
+    
+    if(push and github_repository and branch and github_token):
+        print("😎👌🔥 Push changes in pull request")
+        GitHelper().push_changes_in_pull_request(github_repository, "ted: suggestions", "feat/ted_suggestions-" + str(uuid1()), branch, github_token, clone_path)
 
 def filter_files(file_path, extensions):
     """
@@ -122,12 +131,18 @@ def parse_arguments():
 
     optional_args = parser.add_argument_group('optional arguments')
 
-    required_args.add_argument('-r', '--git-repo', type=str, help='The Git repo URL',
+    required_args.add_argument('-r', '--git_repo', type=str, help='The Git repo URL',
                                 required=False)
     
-    optional_args.add_argument('-b', '--branch', type=str, help='Optional, The branch to use as base',
+    optional_args.add_argument('-b', '--git_branch', type=str, help='Optional, The branch to use as base',
                                 required=False)
-
+    
+    optional_args.add_argument('-ghr', '--github_repository', type=str, help='Optional, Github repository (owner/repo)',
+                                required=False)
+    
+    optional_args.add_argument('-p', '--push', type=str, help='Optional, Github repository (owner/repo)',
+                                required=False)
+    
     return parser.parse_args()
 
 

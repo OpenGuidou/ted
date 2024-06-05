@@ -14,6 +14,13 @@ inputs:
     description: 'TED Flavor'
     required: true
     default: 'unit-tests' # can be 'unit-tests', 'python2-3-migration'
+  github-repository:  # flavor of TED to use
+    description: 'Github repository (ower/repo) to work on'
+    required: true
+  push:
+    description: 'Enable git push and PR creation'
+    required: false
+    default: 'true'
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -24,3 +31,7 @@ runs:
     - ${{ inputs.git-branch }}
     - -f
     - ${{ inputs.ted-flavor }}
+    - -ghr
+    - ${{ inputs.github-repository }}
+    - -p
+    - ${{ inputs.push }}

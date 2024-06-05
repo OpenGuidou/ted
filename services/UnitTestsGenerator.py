@@ -1,14 +1,14 @@
 import re
 from typing import List
 
-from services.Generator import TEDGenerator
+from services.TEDGenerator import TEDGenerator
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_text_splitters import Language
 
 class UnitTestsGenerator(TEDGenerator):
 
-    def runGeneration(self, retriever, llm, output_parser, cloneDir) -> None:
+    def run_generation(self, retriever, llm, output_parser, clone_dir) -> None:
 
         template = """  You are an advanced java unit test coding assistant. You generate only source code. 
         Your role is to analyze and understand the provided code context. 
@@ -82,17 +82,17 @@ code to complete the test class declaration.:
         f.close()    
     
     
-    def getFileExtensions(self) -> List[str]:
+    def get_file_extensions(self) -> List[str]:
         return [".java"]
 
-    def getFileGlob(self) -> str:
+    def get_file_glob(self) -> str:
         return "**/*.java"
 
-    def getTextFormat(self) -> Language:
+    def get_text_format(self) -> Language:
         return Language.JAVA
     
-    def getBranchName(self) -> str:
+    def get_branch_name(self) -> str:
         return "unit-tests"
 
-    def getCommitMessage(self) -> str:
+    def get_commit_message(self) -> str:
         return "chore: Unit tests generation."

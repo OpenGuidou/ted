@@ -5,3 +5,5 @@ GitPython
 python-dotenv
 langchain_community
 unstructured
+pytest
+pytest-cov
