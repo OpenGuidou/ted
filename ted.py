@@ -106,7 +106,7 @@ def main():
     
     if(push and github_repository and branch and github_token):
         print("😎👌🔥 Push changes in pull request")
-        GitHelper().push_changes_in_pull_request(github_repository, "ted: suggestions", "feat/ted_suggestions-" + uuid1(), branch, github_token, clone_path)
+        GitHelper().push_changes_in_pull_request(github_repository, "ted: suggestions", "feat/ted_suggestions-" + str(uuid1()), branch, github_token, clone_path)
 
 def filter_files(file_path, extensions):
     """
