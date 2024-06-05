@@ -90,7 +90,7 @@ class Python2To3Migrator(TEDGenerator):
         return [".py", ".md", ".txt"]
     
     def get_file_glob(self) -> str:
-        return "**/*.py"
+        return "**/*"
     
     def get_text_format(self) -> Language:
         return Language.PYTHON
