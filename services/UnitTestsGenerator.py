@@ -8,48 +8,12 @@ from langchain_text_splitters import Language
 
 class UnitTestsGenerator(TEDGenerator):
 
-    def run_generation(self, retriever, llm, output_parser, clone_dir) -> None:
-
-        template = """  You are an advanced java unit test coding assistant. You generate only source code. 
-        Your role is to analyze and understand the provided code context. 
-        Your task is to generate a functional, runnable, compilable and applicable unit test as a response. 
-        The generated code should compile, be executable and meet the requirements specified in the question.  
-        In case the class uses Quarkus framework, you should generate both  a Quarkus test and a JUnit test.
-        
-        Answer the question based on the following context:
-        {context}
-        
-        Question: {question}
-
-        The response should be in the form of a Java class that contains the existing and new tests.
-        All the existing tests and methods should be kept in the class, and the new tests should be added at the end of the class.
-        New tests must be identifiable in their javadoc with @AIGenerated annotation.
-        If there's no existing test class, you should create a new one.
-        The response will start with a comment indicating the expected file name of the generated unit test. 
-        A suffix is a number that starts from zero. After this code comment, the reponse includes the same package
-       declaration and import statements from the class. It also has import statements to the @Test annotation and the assert* methods (e.g.,
-assertTrue(...)) from JUnit5. Subsequently, the response contains
-the test class’ JavaDoc that specifies the MUT, and how many test
-cases to generate. The response ends with the test class declaration
-followed by a new line (\n), which will trigger you to generate
-code to complete the test class declaration.: 
-        ```
-            <className><suffix>Test.java >
-            <packageDeclaration>
-            <importedPackages>
-            import org.junit.jupiter.api.Test; 
-            import static org.junit.jupiter.api.Assertions.*; 
-            
-            /** 
-            * Test class of {{@link <className>}}. 
-            * It contains <numberTests> unit test cases for the 
-            * {{@link <className>#<methodSignature>}} method.  
-            */ 
-            class  <className><suffix>Test {{
-            }}
-            
-        ```
-        
+    def runGeneration(self, retriever, llm, output_parser, cloneDir) -> None:
+        template = """
+        As an advanced Java code generator, your role is to analyze and understand the provided code context.
+        You should take into account, if applicable, all java files and other files such as Dockerfile, readme, pom.xml, etc.
+        Context : {context}
+        Question : {question}
         """
 
         prompt = ChatPromptTemplate.from_template(template)
@@ -63,16 +27,80 @@ code to complete the test class declaration.:
             | output_parser
         )
 
-        answer = chain.invoke("Produce more unit tests for GreetingResource class.")
+        class_list = chain.invoke("""
+        Give me the list of java classes need to create new unit tests if test class not exist or enhance their unit tests.
+        return the answer without any explanation in a Json format for the classes listing case. 
+
+        Here is an example of the expected output for the file listing case:
+        {{
+            "files": [
+                "file1.py",
+                "Dockerfile", 
+                "requirements.txt",
+                "Readme.md"
+            ]
+        }}
+        """)
+        print(class_list)
+        print("-------------------------------------------------\n")
+
+        class_name = "ProductService.java"
+
+        explain_question = f"""
+        # How to write great unit tests for `{class_name}`
+          In this advanced tutorial for experts, we'll use JAVA and Context to write a suite of unit tests to verify the behavior of the class.
+          Before writing the unit tests, let's review what each element of the class is doing exactly and what the author's intentions may have been.
+        """
+        explain_completion = chain.invoke(explain_question)
 
         print("-------------------------------------------------\n")
-        print(answer)
-        parsed = re.search('```java\n([\\w\\W]*?)\n```', answer)
+        print(explain_completion)
+        plan_question = """
+        A good unit test suite should aim to:
+        - Test the function's behavior for a wide range of possible inputs
+        - Test edge cases that the author may not have foreseen
+        - Take advantage of the features of Context to make the tests easy to write and maintain
+        - Build Objects if needed
+        - Be easy to read and understand, with clean code and descriptive names
+        - Be deterministic, so that the tests always pass or fail in the same way
+        
+        the context has many convenient features that make it easy to write and maintain unit tests. We'll use them to write unit tests for class above.
+        Don't show the code here.
+
+        We'll want our unit tests to handle the following diverse scenarios (and under each scenario, we include a few examples as sub-bullets):
+        """
+
+        prior_text = explain_question + explain_completion + plan_question
+        plan_completion = chain.invoke(prior_text)
+        print("-------------------------------------------------\n")
+        print(plan_completion)
+
+        unit_test = """
+        Before going into the individual tests, let's first look at the complete suite of unit tests as a cohesive whole.
+        We've added helpful comments to explain what each line does.
+        Your task is to generate all the junit tests as a response in one test class based on the scenarios above. 
+        -The test should be functional, runnable, compilable and applicable.
+        -If test class exist, keep all the existing tests and methods in the class. Don't change the existing code.
+        -Don't test `assertThrows` if there's no exception thrown in the methode.
+        -Don't forget to add necessary package and imports for the test class. 
+        -Don't import the dependencies not added in the POM.xml.
+        -Don't add unnecessary code not included in the project.
+        -Don‘t make the methods not exist in the class.
+        -Don't show the explains and only return the final complete test class
+        
+        return the test class in the `java_final` block :
+        ```java_final
+        the final test class
+        ```
+        """
+
+        prior_text += plan_completion + unit_test
+        unit_test_completion = chain.invoke(prior_text)
+        print("-------------------------------------------------\n")
+        print(unit_test_completion)
+        parsed = re.search('```java_final\n([\\w\\W]*?)\n```', unit_test_completion)
         diff = ""
         if parsed is not None:
-            diff = parsed.group(1)
-        else:
-            parsed = re.search('```diff\n([\\w\\W]*?)\n```', answer)
             diff = parsed.group(1)
 
         f = open("generatedTest.java", "w")
