@@ -20,8 +20,9 @@ def main():
     arguments = parse_arguments()
 
     git_url = arguments.git_repo
-    github_token = arguments.github_token
-    branch = arguments.branch
+    github_token = os.getenv('GITHUB_TOKEN')
+    branch = arguments.git_branch
+    push = arguments.push
     github_repository = arguments.github_repository
     ted_flavor = arguments.ted_flavor
 
@@ -102,7 +103,7 @@ def main():
     print("Run generation")
     generator.run_generation(retriever, llm, output_parser, clone_path)
     
-    if(github_repository and branch and github_token):
+    if(push and github_repository and branch and github_token):
         GitHelper().push_changes_in_pull_request(github_repository, "ted: suggestions", "feat/ted_suggestions", branch, github_token)
 
 def filter_files(file_path, extensions):
@@ -127,16 +128,16 @@ def parse_arguments():
 
     optional_args = parser.add_argument_group('optional arguments')
 
-    required_args.add_argument('-r', '--git-repo', type=str, help='The Git repo URL',
+    required_args.add_argument('-r', '--git_repo', type=str, help='The Git repo URL',
                                 required=False)
     
-    optional_args.add_argument('-b', '--branch', type=str, help='Optional, The branch to use as base',
-                                required=False)
-
-    optional_args.add_argument('-gh', '--github_token', type=str, help='Optional, Github token to create branch and open a pull request',
+    optional_args.add_argument('-b', '--git_branch', type=str, help='Optional, The branch to use as base',
                                 required=False)
     
     optional_args.add_argument('-ghr', '--github_repository', type=str, help='Optional, Github repository (owner/repo)',
+                                required=False)
+    
+    optional_args.add_argument('-p', '--push', type=str, help='Optional, Github repository (owner/repo)',
                                 required=False)
     
     return parser.parse_args()
