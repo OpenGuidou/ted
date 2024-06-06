@@ -7,3 +7,4 @@ langchain_community
 unstructured
 pytest
 pytest-cov
+json_repair

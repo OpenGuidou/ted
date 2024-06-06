@@ -1,11 +1,11 @@
 import re
-import json
 from typing import List
+import json_repair
+from langchain_text_splitters import Language
 
 from services.TEDGenerator import TEDGenerator
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from langchain_text_splitters import Language
 
 class Python2To3Migrator(TEDGenerator):
     def __init__(self):
@@ -67,29 +67,23 @@ class Python2To3Migrator(TEDGenerator):
 
         print("-------------------------------------------------\n")
         print(f"🆗: {answer}")
-        parsed = re.search('```json\n([\\w\\W]*?)\n```', answer)
+        files = json_repair.loads(answer)['files']
 
-        if parsed is not None:
-            files_answer = parsed.group(1)
-            files = json.loads(files_answer)['files']
+        for file in files:
+            print("-------------------------------------------------\n")
+            print("File to migrate: {}".format(file))
+            file_answer = chain.invoke("Give me the migrated version of the file {} from python 2 to python 3, with the full content of the file. Keep the file path.".format(file))
+            print(file_answer)
 
-            for file in files:
-                print("-------------------------------------------------\n")
-                print("File to migrate: {}".format(file))
-                file_answer = chain.invoke("Give me the migrated version of the file {} from python 2 to python 3, with the full content of the file. Keep the file path".format(file))
-                print(file_answer)
-
-                file_parsed = re.search('```migrated\n([\\w\\W]*?)\n```', file_answer)
-                if file_parsed is not None:
-                    migrated_content = file_parsed.group(1)
-                    f = open(file, "w")
-                    written = f.write(migrated_content)
-                    print("File written: {}, size: {}".format(file, written))
-                    f.close()
-                else:
-                    print("File parsing failure")
-        else:
-            print("🆘 Answer parsing failure")
+            file_parsed = re.search('```migrated\n([\\w\\W]*?)\n```', file_answer)
+            if file_parsed is not None:
+                migrated_content = file_parsed.group(1)
+                f = open(file, "w")
+                written = f.write(migrated_content)
+                print("File written: {}, size: {}".format(file, written))
+                f.close()
+            else:
+                print("🆘 File parsing failure")
     
     def get_file_extensions(self) -> List[str]:
         return [".py", ".md",".txt", "Dockefile"]
