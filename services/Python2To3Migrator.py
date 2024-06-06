@@ -42,6 +42,7 @@ class Python2To3Migrator(TEDGenerator):
         ```migrated
           ...Migrated file content
         ```
+        Do not include the name path in the migrated file content.
 
         Here are the files that need to be taken into account:
         {context}
