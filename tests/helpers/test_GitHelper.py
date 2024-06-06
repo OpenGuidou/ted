@@ -54,8 +54,8 @@ def mocked_git_repository_clone(*args, **kwargs):
         file.write("Test text goes here")
 
     r = Repo.init(args[0])
-    r.git.execute(['git', 'config', '--global', 'user.email', 'this.is.an@example.com'])
-    r.git.execute(['git', 'config', '--global', 'user.name', 'this.is.a.name'])
+    r.git.execute(['git', 'config', '--local', 'user.email', 'this.is.an@example.com'])
+    r.git.execute(['git', 'config', '--local', 'user.name', 'this.is.a.name'])
     r.git.add(all=True)
     r.remote = mock.MagicMock()
 
