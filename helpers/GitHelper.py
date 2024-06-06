@@ -42,6 +42,7 @@ class GitHelper(object):
         r.git.execute(['git', 'config', '--global', '--add', 'safe.directory', clone_path])
         r.git.execute(['git', 'checkout', '-b', target_branch])
         r.git.commit('-am', message)
-        r.git.push('origin', target_branch)
+        origin = r.remote(name='origin')
+        origin.push(target_branch)
 
         self.create_pull_request(repository, message, '', target_branch, head_branch, token)

@@ -11,6 +11,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_text_splitters import Language
 
+
 class UnitTestsGenerator(TEDGenerator):
 
     def run_generation(self, retriever, llm, output_parser, clone_dir) -> None:
@@ -69,13 +70,13 @@ class UnitTestsGenerator(TEDGenerator):
 
         prompt = ChatPromptTemplate.from_template(template)
 
-        chain = ( 
-            {
-                "context": retriever, "question": RunnablePassthrough()
-            }
-            | prompt
-            | llm
-            | output_parser
+        chain = (
+                {
+                    "context": retriever, "question": RunnablePassthrough()
+                }
+                | prompt
+                | llm
+                | output_parser
         )
   
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -117,12 +118,9 @@ class UnitTestsGenerator(TEDGenerator):
     def get_file_extensions(self) -> List[str]:
         return [".java"]
 
-    def get_file_glob(self) -> str:
-        return "**/*.java"
-
     def get_text_format(self) -> Language:
         return Language.JAVA
-    
+
     def get_branch_name(self) -> str:
         return "unit-tests"
 

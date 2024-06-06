@@ -13,10 +13,6 @@ class TestTedGenerator(unittest.TestCase):
         ted_generator = TEDGenerator()
         self.assertIsNone(ted_generator.get_file_extensions())
 
-    def test_get_file_glob(self):
-        ted_generator = TEDGenerator()
-        self.assertIsNone(ted_generator.get_file_glob())
-
     def test_get_text_format(self):
         ted_generator = TEDGenerator()
         self.assertIsNone(ted_generator.get_text_format())
