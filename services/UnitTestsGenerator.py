@@ -21,29 +21,32 @@ class UnitTestsGenerator(TEDGenerator):
         You only generate source code.
         Your task is to generate a functional, runnable, compilable and applicable unit tests class as a response.
         You only take into account the file provided in the question. 
-        The generated code should compile, be executable and meet the requirements specified in the question. Moreover, it should not summarize the changes
-        but provide the full content of the file.
+        The generated code must compile, be executable and meet the requirements specified in the question. Moreover, it must
+        contain the full content of the file.
         In case the tested class uses Quarkus framework, you should generate both Quarkus tests and Junit tests.
-        
-        Answer the question based on the following context:
-        {context}
-        
-        Question: {question}
 
-        When the generation takes more than 300 seconds, you can stop the process and return the current state of the generated code
+        When the generation takes more than 300 seconds, you stop the process and return the current state of the generated code
         with @abortedGEneration annotation in the class javadoc.
 
-        Here is an example of the expected output for the file migration case:
-
+        Here is an example of the expected output for the unit test generation:
         The response should be in the form of a Java class that contains the existing and new tests.
         All the existing tests and methods should be kept in the class, and the new tests should be added at the end of the class.
-        New test methods must be identifiable in their javadoc with @TedAIGenerated <timestamp> annotation. 
-        If there isn't any existing test class, you should create a new one and all the its test methods should have @TedAIGenerated <timestamp> annotation in their javadoc.
+        New test methods must be identifiable with a javadoc comment containing @TedAIGenerated <timestamp> annotation and a description of the purpose of the test, like : 
+        /**
+         * Test getting a product by ID that does not exist in the ProductService.
+         * @TedAIGenerated 20240606113022
+         */
+        If there isn't any existing test class, you should create a new one.
         The response will start with the same package declaration and import statements than the tested class. 
         It also has import statements to the @Test annotation and the assert* methods (e.g.,assertTrue(...)) from JUnit5. 
         Subsequently, the response contains the test class’ JavaDoc that specifies the MUT, and the number of test cases. 
         The response ends with the test class declaration followed by a new line (\n), which will trigger you to generate code to
-        complete the test class declaration.: 
+        complete the test class declaration.
+        - Don't test `assertThrows` if there's no exception thrown in the method.
+        - Don't forget to add necessary package and imports for the test class. 
+        - Don't import the dependencies not added in the POM.xml.
+        - Don't add unnecessary code not included in the project.
+        - Don‘t use non existing class constructors (very important point): 
         
         <packageDeclaration>
         <importedPackages>
@@ -53,7 +56,14 @@ class UnitTestsGenerator(TEDGenerator):
          * Test class of {{@link <className>}}. 
          * It contains <numberTests> unit test cases.  
         */ 
-        class  <className>Test {{  
+        class  <className>Test {{ 
+
+
+
+        Answer the question based on the following context:
+        {context}
+        
+        Question: {question} 
          
         """
 
