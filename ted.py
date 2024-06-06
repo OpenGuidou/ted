@@ -89,7 +89,7 @@ def main():
     docs = GenericLoader.from_filesystem(
         clone_path,
         glob="*",
-        suffixes= [generator.get_file_extensions()].extend([".md",".txt", "Dockefile" ]),
+        suffixes= generator.get_file_extensions(),
         parser=LanguageParser(parser_threshold=0), # Activate the parser since the first line
     ).load()
     print(f"📄 Found {len(docs)} documents")

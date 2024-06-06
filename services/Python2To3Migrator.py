@@ -21,7 +21,7 @@ class Python2To3Migrator(TEDGenerator):
         You should only return the files containing a change to be done for the migration. You should return all the files that need to be modified.
         You should take into account, if applicable, all python files and other files such as Dockerfile, readme, requirements.txt, etc.
 
-        Here is an example of the expected output for the file listing case:
+        Here is an example of the expected json output for the file listing case:
         {{
             "files": [
                 "file1.py",
@@ -92,7 +92,7 @@ class Python2To3Migrator(TEDGenerator):
             print("🆘 Answer parsing failure")
     
     def get_file_extensions(self) -> List[str]:
-        return [".py"]
+        return [".py", ".md",".txt", "Dockefile"]
         
     def get_text_format(self) -> Language:
         return Language.PYTHON
