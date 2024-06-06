@@ -1,5 +1,10 @@
+from datetime import datetime
+import time
+import os
+import json
 import re
 from typing import List
+import fnmatch
 
 from services.TEDGenerator import TEDGenerator
 from langchain_core.prompts import ChatPromptTemplate
@@ -9,15 +14,61 @@ from langchain_text_splitters import Language
 
 class UnitTestsGenerator(TEDGenerator):
 
-    def run_generation(self, retriever, llm, output_parser, cloneDir) -> None:
-        template = """
-        As an advanced Java code generator, your role is to analyze and understand the provided code context.
-        You should take into account, if applicable, all java files and other files such as Dockerfile, readme, pom.xml, etc.
-        The generated code should compile, be executable and meet the requirements specified in the question.  
-        In case the class uses Quarkus framework, a Quarkus test may need.
+    def run_generation(self, retriever, llm, output_parser, clone_dir) -> None:
+
+        template = """You are an advanced java unit test coding assistant. 
+        Your role is to analyze and understand the provided code context. 
+   
+        You only generate source code.
+        Your task is to generate a functional, runnable, compilable and applicable unit tests class as a response.
+        You only take into account the file provided in the question. 
+        The generated code must compile, be executable and meet the requirements specified in the question. Moreover, it must
+        contain the full content of the file.
+        In case the tested class uses Quarkus framework, you should generate both Quarkus tests and Junit tests.
+
+        When the generation takes more than 300 seconds, you stop the process and return the current state of the generated code
+        with @abortedGEneration annotation in the class javadoc.
+
+        Here is an example of the expected output for the unit test generation:
+        The response should be in the form of a Java class that contains the existing and new tests.
+        All the existing tests and methods should be kept in the class, and the new tests should be added at the end of the class.
+        New test methods must be identifiable with a javadoc comment containing @TedAIGenerated <timestamp> annotation and a description of the purpose of the test, like : 
+        /**
+         * Test getting a product by ID that does not exist in the ProductService.
+         * @TedAIGenerated 20240606113022
+         */
+        If there isn't any existing test class, you should create a new one.
+        The response will start with the same package declaration and import statements than the tested class. 
+        It also has import statements to the @Test annotation and the assert* methods (e.g.,assertTrue(...)) from JUnit5. 
+        Subsequently, the response contains the test class’ JavaDoc that specifies the MUT, and the number of test cases. 
+        The response ends with the test class declaration followed by a new line (\n), which will trigger you to generate code to
+        complete the test class declaration.
+        - Don't test `assertThrows` if there's no exception thrown in the method.
+        - Don't forget to add necessary package and imports for the test class. 
+        - Don't import the dependencies not added in the POM.xml.
+        - Don't add unnecessary code not included in the project.
+        - Don‘t use non existing class constructors (very important point): 
         
-        Context : {context}
-        Question : {question}
+        ```java
+        <packageDeclaration>
+        <importedPackages>
+        import org.junit.jupiter.api.Test; 
+        import static org.junit.jupiter.api.Assertions.*;   
+        /** 
+         * Test class of {{@link <className>}}. 
+         * It contains <numberTests> unit test cases.  
+        */ 
+        class  <className>Test {{ 
+
+        ```
+
+
+
+        Answer the question based on the following context:
+        {context}
+        
+        Question: {question} 
+         
         """
 
         prompt = ChatPromptTemplate.from_template(template)
@@ -30,92 +81,43 @@ class UnitTestsGenerator(TEDGenerator):
                 | llm
                 | output_parser
         )
-
-        class_list = chain.invoke("""
-        Give me the list of existing java class in the project that you could improve the unit tests for them.
-        Return the answer without any explanation in a Json format for the class listing case. 
-
-        Here is an example of the expected output for the file listing case:
-        {{
-            "files": [
-                "AAA.java",
-                "BBB.java", 
-                "CCC.java"
-                ...
-            ]
-        }}
-        """)
+  
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        global_timer_start = time.time()
+        for java_file in self.list_java_files('clone/src/main'):
+            print("-------------------------------------------------\n")
+            local_timer_start = time.time()
+            print("Class to add unit tests to: {}".format(java_file))
+            file_answer = chain.invoke("Produce more unit tests for {} class with timestamp {}. All methods should be covered".format(java_file, timestamp ))
+            print(file_answer)
+            file_parsed = re.search('```java\n([\\w\\W]*?)\n```', file_answer)
+            if file_parsed is not None:
+                enhanced_unit_class = file_parsed.group(1)
+                test_class_path = java_file.replace('clone/src/main', 'clone/src/test', 1)
+                test_class_path = self.add_test_after_class_name_extension(test_class_path)
+                print ("Junit created/updated: {}".format(test_class_path))
+                # junit are in the same package than the source  but in test root.
+                print ("Working directory:")
+                print(os.getcwd())
+                # in case an intermediate directory does not exist, create it.
+                dir_name = os.path.dirname(test_class_path)
+                os.makedirs(dir_name, exist_ok=True)
+                with open("./{}".format(test_class_path), 'w') as f:
+                    written = f.write(enhanced_unit_class)
+                print("File written: {}, size: {}".format("./{}".format(test_class_path), written))
+                f.close()
+            else:
+                print("No need to add unit test for the file.")
+            local_timer_end = time.time()
+            local_elapsed_time = local_timer_end - local_timer_start
+            print ("Time elapsed for the last java file repo process: {}".format(local_elapsed_time))
+        global_timer_end = time.time()
+        global_elapsed_time = global_timer_end - global_timer_start
         print("-------------------------------------------------\n")
-        print(class_list)
-
-        class_name = "ProductService.java"
-
-        explain_question = f"""
-        # How to write great unit tests for `{class_name}`
-          In this advanced tutorial for experts, we'll use JAVA and Context to write a suite of unit tests to verify the behavior of the class.
-          Before writing the unit tests, let's review what each element of the class is doing exactly and what the author's intentions may have been.
-        """
-        explain_completion = chain.invoke(explain_question)
-
         print("-------------------------------------------------\n")
-        print(explain_completion)
-        plan_question = """
-        A good unit test suite should aim to:
-        - Test the function's behavior for a wide range of possible inputs
-        - Test edge cases that the author may not have foreseen
-        - Take advantage of the features of Context to make the tests easy to write and maintain
-        - Build Objects if needed
-        - Be easy to read and understand, with clean code and descriptive names
-        - Be deterministic, so that the tests always pass or fail in the same way
-        
-        the context has many convenient features that make it easy to write and maintain unit tests. We'll use them to write unit tests for class above.
-        Don't show the code here.
-
-        We'll want our unit tests to handle the following diverse scenarios (and under each scenario, we include a few examples as sub-bullets):
-        """
-
-        prior_text = explain_question + explain_completion + plan_question
-        plan_completion = chain.invoke(prior_text)
-        print("-------------------------------------------------\n")
-        print(plan_completion)
-
-        unit_test = """
-        Before going into the individual tests, let's first look at the complete suite of unit tests as a cohesive whole.
-        We've added helpful comments to explain what each line does.
-        Your task is to generate all the junit tests as a response in one test class based on the scenarios above. 
-
-        - The test should be functional, runnable, compilable and applicable.
-        - New tests must be identifiable in their javadoc with @AIGenerated annotation.
-        - If there's no existing test class, you should create a new one.
-        - If test class exist, keep all the existing tests and methods in the class. Don't change the existing code.
-        - Don't test `assertThrows` if there's no exception thrown in the methode.
-        - Don't forget to add necessary package and imports for the test class. 
-        - Don't import the dependencies not added in the POM.xml.
-        - Don't add unnecessary code not included in the project.
-        - Don‘t make the methods not exist in the class.
-        - Don't show the explains and only return the final complete test class
-        
-        return the test class in the `java_final` block :
-        ```java_final
-        the final test class
-        ```
-        """
-
-        prior_text += plan_completion + unit_test
-        unit_test_completion = chain.invoke(prior_text)
-        print("-------------------------------------------------\n")
-        print(unit_test_completion)
-        parsed = re.search('```java_final\n([\\w\\W]*?)\n```', unit_test_completion)
-        diff = ""
-        if parsed is not None:
-            diff = parsed.group(1)
-
-        f = open(f"{class_name}Test.java", "w")
-        print("Parsed-------------------------------------------------\n")
-        print(diff)
-        f.write(diff)
-        f.close()
-
+        print ("Time elapsed for the full repo process: {}".format(global_elapsed_time))
+ 
+    
     def get_file_extensions(self) -> List[str]:
         return [".java"]
 
@@ -127,3 +129,16 @@ class UnitTestsGenerator(TEDGenerator):
 
     def get_commit_message(self) -> str:
         return "chore: Unit tests generation."
+    
+    def list_java_files(self, directory):
+        java_files = []
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                if fnmatch.fnmatch(file, '*.java'):
+                    java_files.append(os.path.join(root, file))
+        return java_files
+    
+    def add_test_after_class_name_extension(self, file_path):
+        base_name = os.path.basename(file_path)
+        new_base_name = re.sub(r'(.*)\.java', r'\1Test.java', base_name)
+        return os.path.join(os.path.dirname(file_path), new_base_name)
