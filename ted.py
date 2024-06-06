@@ -157,7 +157,7 @@ def main():
             print(f"Loader uses from github workspace: {clone_path}")
             loader = DirectoryLoader(
                 path=clone_path,
-                glob=generator.get_file_glob(),
+                glob="**/*.java",
                 # @TODO Find a way to use glob with extensions: "**/*{" +",".join(generator.getFileExtensions()) + "}",
                 show_progress=True,
                 loader_cls=TextLoader
