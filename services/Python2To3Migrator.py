@@ -38,7 +38,13 @@ class Python2To3Migrator(TEDGenerator):
         Migrate the python code, but also update the dependencies and the documentation if needed.
         Migrate to the latest python 3 version available. 
 
-        The expected output for the file migration case must be in the following format:
+        You only take into account the file provided in the question.
+        The generated code should work and must contain the full content of the file
+        You return the answer as a text file for the file migration case.      
+        You should migrate the python code, but also update the dependencies and the documentation (like in the Readme.md) if needed.
+        You should migrate to the latest python 3 version available. 
+
+        Here is an example of the expected output for the file migration case:
         ```migrated
         # Migrated file content
         ```
@@ -75,8 +81,8 @@ class Python2To3Migrator(TEDGenerator):
             print("File to migrate: {}".format(file))
             file_answer = chain.invoke("Give me the migrated version of the file {} in the context of the migration from python 2 to python 3, with the full content of the file. Keep the file path.".format(file))
             print(file_answer)
-            
-            file_parsed = re.search('^```migrated\n(.*)```$', file_answer, re.MULTILINE | re.DOTALL)
+
+            file_parsed = re.search('```migrated\n([\\w\\W]*)\n```', file_answer)
             if file_parsed is not None:
                 migrated_content = file_parsed.group(1)
                 f = open(file, "w")
