@@ -9,3 +9,6 @@ clone/
 # Python
 **/__pycache__/
 .coverage
+
+# Tests
+tests/helpers/clone_path
