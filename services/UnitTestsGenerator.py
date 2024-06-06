@@ -103,9 +103,9 @@ class UnitTestsGenerator(TEDGenerator):
                 # in case an intermediate directory does not exist, create it.
                 dir_name = os.path.dirname(test_class_path)
                 os.makedirs(dir_name, exist_ok=True)
-                with open("./{}".format(test_class_path), 'w') as f:
+                with open(test_class_path, 'w') as f:
                     written = f.write(enhanced_unit_class)
-                print("File written: {}, size: {}".format("./{}".format(test_class_path), written))
+                print("File written: {}, size: {}".format(test_class_path, written))
                 f.close()
             else:
                 print("No need to add unit test for the file.")
