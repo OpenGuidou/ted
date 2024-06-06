@@ -12,16 +12,16 @@ class Python2To3Migrator(TEDGenerator):
         pass
 
     def run_generation(self, retriever, llm, output_parser, clone_dir) -> None:
-        template = """You are a skilled python developer. Your job is to migrate python 2 projects to python 3.
+        template = """You are a skilled python agent. You have to migrate python2 projects to python3.
 
         You work in two uses cases: You read the code provided provide a list of files that needs to be modified during the migration, or provide the full content of a file requested after the migration.
         
         For the list of file case: 
         You return the answer without any explanation in a Json format for the files listing case. 
-        You should only return the files containing a change to be done for the migration. You should return all the files that need to be modified.
-        You should take into account, if applicable, all python files and other files such as Dockerfile, readme, requirements.txt, etc.
+        You ony return the files containing a change to be done for the migration. You return all the files that need to be modified.
+        You take into account, if applicable, all python files and other files such as Dockerfile, readme, requirements.txt, etc.
 
-        Here is an example of the expected json output for the file listing case:
+        The expected json output for the file listing case must be:
         {{
             "files": [
                 "file1.py",
@@ -32,14 +32,13 @@ class Python2To3Migrator(TEDGenerator):
         }}
 
         For the file migration case:
+        Take into account the file provided in the question.
+        The generated code must contain the full content of the file.
+        Return the answer as a text file for the file migration case.
+        Migrate the python code, but also update the dependencies and the documentation if needed.
+        Migrate to the latest python 3 version available. 
 
-        You only take into account the file provided in the question.
-        The generated code should work and must contain the full content of the file
-        You return the answer as a text file for the file migration case.      
-        You should migrate the python code, but also update the dependencies and the documentation if needed.
-        You should migrate to the latest python 3 version available. 
-
-        Here is an example of the expected output for the file migration case:
+        The expected output for the file migration case must be in the following format:
         ```migrated
         # Migrated file content
         ```
@@ -76,8 +75,8 @@ class Python2To3Migrator(TEDGenerator):
             print("File to migrate: {}".format(file))
             file_answer = chain.invoke("Give me the migrated version of the file {} in the context of the migration from python 2 to python 3, with the full content of the file. Keep the file path.".format(file))
             print(file_answer)
-
-            file_parsed = re.search('```migrated\n([\\w\\W]*?)\n```', file_answer)
+            
+            file_parsed = re.search('^```migrated\n(.*)```$', file_answer, re.MULTILINE | re.DOTALL)
             if file_parsed is not None:
                 migrated_content = file_parsed.group(1)
                 f = open(file, "w")
@@ -88,7 +87,7 @@ class Python2To3Migrator(TEDGenerator):
                 print("🆘 File parsing failure")
     
     def get_file_extensions(self) -> List[str]:
-        return [".py", ".md",".txt", "Dockefile"]
+        return [".py", ".md",".txt", "Dockerfile"]
         
     def get_text_format(self) -> Language:
         return Language.PYTHON

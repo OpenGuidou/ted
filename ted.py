@@ -85,7 +85,7 @@ def main():
         return
 
     ############################################################################################################
-    print(f'📂 Load code documents from {clone_path}')
+    print(f'📂 Load [{generator.get_file_extensions()}] documents from {clone_path}')
     docs = GenericLoader.from_filesystem(
         clone_path,
         glob="*",
