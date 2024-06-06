@@ -84,6 +84,7 @@ class UnitTestsGenerator(TEDGenerator):
   
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         global_timer_start = time.time()
+        print(f"Search files in {clone_dir + 'src/main'}")
         for java_file in self.list_java_files( clone_dir + 'src/main'):
             print("-------------------------------------------------\n")
             local_timer_start = time.time()
