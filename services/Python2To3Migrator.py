@@ -40,7 +40,7 @@ class Python2To3Migrator(TEDGenerator):
 
         Here is an example of the expected output for the file migration case:
         ```migrated
-        # Migrated file content
+          ...Migrated file content
         ```
 
         Here are the files that need to be taken into account:
