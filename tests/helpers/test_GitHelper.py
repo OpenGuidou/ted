@@ -46,7 +46,8 @@ def onerror(func, path, exc_info):
         raise
 
 def mocked_git_repository_clone(*args, **kwargs):
-    shutil.rmtree(args[0], onerror=onerror)
+    if os.path.isdir(args[0]):
+        shutil.rmtree(args[0], onerror=onerror)
     os.makedirs(args[0])
 
     with open(os.path.join(args[0], "test_file.txt"), "w") as file:
