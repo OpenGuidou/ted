@@ -14,10 +14,10 @@ class Python2To3Migrator(TEDGenerator):
     def run_generation(self, retriever, llm, output_parser, clone_dir) -> None:
         template = """You are a skilled python agent. You have to migrate python2 projects to python3.
 
-        You work in two uses cases: You read the code provided provide a list of files that needs to be modified during the migration, or provide the full content of a file requested after the migration.
-        
-        For the list of file case: 
-        You return the answer without any explanation in a Json format for the files listing case. 
+        You work in two uses cases: You analyze the provided code and generate a list of files that need to be modified during the migration, or provide the full content of a file requested after the migration.
+
+        For the list of file case:
+        You return the answer without any explanation in a Json format for the files listing case.
         You ony return the files containing a change to be done for the migration. You return all the files that need to be modified.
         You take into account, if applicable, all python files and other files such as Dockerfile, readme, requirements.txt, etc.
 
@@ -33,16 +33,16 @@ class Python2To3Migrator(TEDGenerator):
 
         For the file migration case:
         Take into account the file provided in the question.
-        The generated code should work and must contain the full content of the file
-        You return the answer as a text file for the file migration case.      
+        The generated code should work and must contain the full content of the file.
+        You return the answer as a text file for the file migration case.
         You should migrate the python code, but also update the dependencies and the documentation (like in the Readme.md) if needed.
-        You should migrate to the latest python 3 version available. 
+        You should migrate to the latest python 3 version available.
 
         Here is an example of the expected output for the file migration case:
         ```migrated
         # Migrated file content
         ```
-                
+
         Here are the files that need to be taken into account:
         {context}
 
