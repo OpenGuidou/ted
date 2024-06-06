@@ -27,6 +27,7 @@ def main():
 
     git_url = arguments.git_repo
     github_token = os.getenv('GITHUB_TOKEN')
+    debug = os.getenv('DEBUG')
     branch = arguments.git_branch
     push = arguments.push
     github_repository = arguments.github_repository
@@ -55,7 +56,8 @@ def main():
     )
 
     output_parser = StrOutputParser()
-    loaders = []
+    docs = []
+    texts= []
     # Check if git_url exists
     clone_path = None
     if git_url:
@@ -81,64 +83,59 @@ def main():
     if(not clone_path):
         print("No git repository provided.")
         return
-        
-    print(f'📂 Load documents from {clone_path}')
-    loaders.append(GenericLoader.from_filesystem(
+
+    ############################################################################################################
+    print(f'📂 Load code documents from {clone_path}')
+    docs = GenericLoader.from_filesystem(
         clone_path,
         glob="*",
-        #suffixes= generator.get_file_extensions(),
-        #parser=LanguageParser(generator.get_text_format()),
-        suffixes= [".py"],
-        parser=LanguageParser(generator.get_text_format()),
-    ))
-    loaders.append(GenericLoader.from_filesystem(
-        clone_path,
-        glob="*",
-        suffixes= [".txt", ".md", "Dockerfile"],
-        parser= TextParser()
-    ))
-
-    # Load all documents
-    docs = []
-    for loader in loaders:
-        docs.extend(loader.load())
-
-    # Add a new document to docs array
-    # docs.append(TextLoader("text", "This is a test document"))
-
-    # if zero docs stop
-    if len(docs) == 0:
-        print("📄 No documents found.")
-        return
+        suffixes= [generator.get_file_extensions()].extend([".md",".txt", "Dockefile" ]),
+        parser=LanguageParser(parser_threshold=0), # Activate the parser since the first line
+    ).load()
     print(f"📄 Found {len(docs)} documents")
 
-    for document in docs:
-        pprint(document)
-
-           
-    text_format = generator.get_text_format()
-    print("Using language splitter {}.".format(text_format))
     text_splitter = RecursiveCharacterTextSplitter.from_language(
-        language=text_format ,chunk_size=2000, chunk_overlap=200
+        language=generator.get_text_format() ,chunk_size=2000, chunk_overlap=200, add_start_index=True
     )
+    texts.extend(text_splitter.split_documents(docs))
+    for document in docs:
+        pprint(document.metadata)
 
-    print("Split documents")
-    texts = text_splitter.split_documents(docs)
-    
     print(f"📄 Generated {len(texts)} chuncks for {len(docs)} documents")
-    print("Create embeddings and vector store")
-    embedding = AzureOpenAIEmbeddings(
-        # keys and endpoint are read from the .env file
-        openai_api_version=os.getenv('OPENAI_API_VERSION'),
-        deployment=os.getenv('EMBEDDING_DEPLOYMENT_NAME'),
-    )
-    vector_store = FAISS.from_documents(
-        texts, embedding=embedding
-    )
-    retriever = vector_store.as_retriever()
 
-    print("🔍 Run generation")
-    generator.run_generation(retriever, llm, output_parser, clone_path)
+    # group text chuncks by source file
+    source_files = {}
+    for text in texts:
+        source_file = text.metadata["source"]
+        if source_file not in source_files:
+            source_files[source_file] = []
+        source_files[source_file].append(text)
+
+    for source_file, texts in source_files.items():
+        print(f"\t📄 {source_file} has {len(texts)} chuncks")
+        if(debug):
+            for text in texts:
+                pprint(text, indent=4)
+
+    ############################################################################################################
+    
+    # Loop over source files and run the generation
+    for source_file, texts in source_files.items():
+        print(f"🚀 Generation from file: {source_file}")
+            
+        print("Create embeddings and vector store")
+        embedding = AzureOpenAIEmbeddings(
+            # keys and endpoint are read from the .env file
+            openai_api_version=os.getenv('OPENAI_API_VERSION'),
+            deployment=os.getenv('EMBEDDING_DEPLOYMENT_NAME'),
+        )
+        vector_store = FAISS.from_documents(
+            texts, embedding=embedding
+        )
+        retriever = vector_store.as_retriever()
+
+        print("🔍 Run generation")
+        generator.run_generation(retriever, llm, output_parser, clone_path)
     
     if(push and github_repository and branch and github_token):
         print("😎👌🔥 Push changes in pull request")
