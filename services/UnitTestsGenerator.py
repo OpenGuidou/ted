@@ -84,7 +84,7 @@ class UnitTestsGenerator(TEDGenerator):
   
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         global_timer_start = time.time()
-        for java_file in self.list_java_files('clone/src/main'):
+        for java_file in self.list_java_files( clone_dir + 'src/main'):
             print("-------------------------------------------------\n")
             local_timer_start = time.time()
             print("Class to add unit tests to: {}".format(java_file))
@@ -93,7 +93,7 @@ class UnitTestsGenerator(TEDGenerator):
             file_parsed = re.search('```java\n([\\w\\W]*?)\n```', file_answer)
             if file_parsed is not None:
                 enhanced_unit_class = file_parsed.group(1)
-                test_class_path = java_file.replace('clone/src/main', 'clone/src/test', 1)
+                test_class_path = java_file.replace(clone_dir + '/src/main', clone_dir + 'src/test', 1)
                 test_class_path = self.add_test_after_class_name_extension(test_class_path)
                 print ("Junit created/updated: {}".format(test_class_path))
                 # junit are in the same package than the source  but in test root.
