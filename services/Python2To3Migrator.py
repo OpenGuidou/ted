@@ -21,7 +21,7 @@ class Python2To3Migrator(TEDGenerator):
         You should only return the files containing a change to be done for the migration. You should return all the files that need to be modified.
         You should take into account, if applicable, all python files and other files such as Dockerfile, readme, requirements.txt, etc.
 
-        Here is an example of the expected output for the file listing case:
+        Here is an example of the expected json output for the file listing case:
         {{
             "files": [
                 "file1.py",
@@ -58,7 +58,12 @@ class Python2To3Migrator(TEDGenerator):
             | output_parser
         )
 
-        answer = chain.invoke("Give me the list of files that should be modified to migrate from Python 2 to Python 3.")
+        question = "Give me the list of files that should be modified to migrate from Python 2 to Python 3. Keep the file path."
+
+        retrieved_docs = retriever.invoke(question)
+        print(f"Retriever detected {len(retrieved_docs)} relevant Documents given a string query.")
+        
+        answer = chain.invoke(question)
 
         print("-------------------------------------------------\n")
         print(f"🆗: {answer}")
@@ -67,21 +72,21 @@ class Python2To3Migrator(TEDGenerator):
         for file in files:
             print("-------------------------------------------------\n")
             print("File to migrate: {}".format(file))
-            file_answer = chain.invoke("Give me the migrated version of the file {} from python 2 to python 3, with the full content of the file".format(file))
+            file_answer = chain.invoke("Give me the migrated version of the file {} from python 2 to python 3, with the full content of the file. Keep the file path.".format(file))
             print(file_answer)
 
             file_parsed = re.search('```migrated\n([\\w\\W]*?)\n```', file_answer)
             if file_parsed is not None:
                 migrated_content = file_parsed.group(1)
-                f = open(clone_dir + "/" + file, "w")
+                f = open(file, "w")
                 written = f.write(migrated_content)
-                print("File written: {}, size: {}".format(clone_dir + "/" + file, written))
+                print("File written: {}, size: {}".format(file, written))
                 f.close()
             else:
-                print("File parsing failure")
+                print("🆘 File parsing failure")
     
     def get_file_extensions(self) -> List[str]:
-        return [".py"]
+        return [".py", ".md",".txt", "Dockefile"]
         
     def get_text_format(self) -> Language:
         return Language.PYTHON
