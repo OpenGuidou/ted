@@ -33,12 +33,6 @@ class Python2To3Migrator(TEDGenerator):
 
         For the file migration case:
         Take into account the file provided in the question.
-        The generated code must contain the full content of the file.
-        Return the answer as a text file for the file migration case.
-        Migrate the python code, but also update the dependencies and the documentation if needed.
-        Migrate to the latest python 3 version available. 
-
-        You only take into account the file provided in the question.
         The generated code should work and must contain the full content of the file
         You return the answer as a text file for the file migration case.      
         You should migrate the python code, but also update the dependencies and the documentation (like in the Readme.md) if needed.
