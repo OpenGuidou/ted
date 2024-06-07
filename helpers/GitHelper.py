@@ -43,8 +43,10 @@ class GitHelper(object):
         r.git.execute(['git', 'config', '--global', '--add', 'safe.directory', clone_path])
         r.git.execute(['git', 'checkout', '-b', target_branch])
         files_to_add = r.git.execute(
-            ['git', 'ls-files', '--others', '--exclude-standard', 'grep', '\\\.java', '|', 'grep', 'src/test'])
-        r.git.execute(['git', 'add', files_to_add])
+            ['git', 'ls-files', '--others', '--exclude-standard', 'grep', '\\.java', '|', 'grep', 'src/test'])
+        files_to_add = files_to_add.split("\n")
+        for file in files_to_add:
+            r.git.execute(['git', 'add', file])
         r.git.commit('-am', message)
         r.git.push('origin', target_branch)
 
