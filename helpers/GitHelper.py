@@ -3,6 +3,7 @@ import requests
 
 from git import Repo
 
+
 class GitHelper(object):
     """
     Helper class for GIT
@@ -43,7 +44,9 @@ class GitHelper(object):
         r.git.execute(['git', 'checkout', '-b', target_branch])
         files_to_add = r.git.execute(
             ['git', 'ls-files', '--others', '--exclude-standard', 'grep', '\\.java', '|', 'grep', 'src/test'])
-        r.git.execute(['git', 'add', files_to_add])
+        files_to_add = files_to_add.split("\n")
+        for file in files_to_add:
+            r.git.execute(['git', 'add', file])
         r.git.commit('-am', message)
         origin = r.remote(name='origin')
         origin.push(target_branch)
